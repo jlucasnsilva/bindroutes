@@ -11,10 +11,12 @@ type (
 	router map[string]bool
 
 	handler struct {
-		Post    http.HandlerFunc `handle:"POST /users"`
-		Get     http.HandlerFunc `handle:"GET /users/{id}"`
-		Put     http.HandlerFunc `handle:"PUT /users/{id}"`
-		Delete  http.HandlerFunc `handle:"DELETE /users/{id}"`
+		Group `handle:"/users"`
+
+		Post    http.HandlerFunc `handle:"POST /"`
+		Get     http.HandlerFunc `handle:"GET /{id}"`
+		Put     http.HandlerFunc `handle:"PUT /{id}"`
+		Delete  http.HandlerFunc `handle:"DELETE /{id}"`
 		Ignored string
 	}
 

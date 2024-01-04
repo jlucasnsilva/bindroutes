@@ -2,6 +2,7 @@ package bindroutes
 
 import (
 	"net/http"
+	"path"
 	"reflect"
 	"strings"
 )
@@ -22,10 +23,19 @@ type (
 		Put(pattern string, h http.HandlerFunc)
 	}
 
+	// Group is a annotation type so a routing group can be provided.
+	// The controller struct should embed it with a handle tag that
+	// contains only the routing group path/pattern.
+	Group struct{}
+
 	// plug maps methods (POST, GET, DELETE, etc) to a http.HandlerFunc
 	// cast as a reflect.Value.
 	plug map[string]reflect.Value
 )
+
+const groupTypeName = "Group"
+
+var groupType = reflect.TypeOf(Group{})
 
 // Using binds all the handler funcs of each controller to a HandleFunc,
 // for instance: for the given controller function
@@ -93,7 +103,14 @@ func using(p plug, controllers []any) {
 }
 
 func (p plug) register(v reflect.Value) {
-	for i, f := range reflect.VisibleFields(v.Type()) {
+	fields := reflect.VisibleFields(v.Type())
+	group := routingGroup(fields)
+
+	for i, f := range fields {
+		if isGroupAnnotation(f) {
+			continue
+		}
+
 		tag := f.Tag.Get("handle")
 		if tag == "" {
 			continue
@@ -102,14 +119,28 @@ func (p plug) register(v reflect.Value) {
 		method, pattern := splitTag(tag)
 		for k, handle := range p {
 			if method == k {
+				p := path.Join(group, pattern)
 				in := []reflect.Value{
-					reflect.ValueOf(pattern),
+					reflect.ValueOf(p),
 					v.FieldByIndex([]int{i}),
 				}
 				handle.Call(in)
 			}
 		}
 	}
+}
+
+func isGroupAnnotation(f reflect.StructField) bool {
+	return f.Name == groupTypeName && f.Type == groupType
+}
+
+func routingGroup(fields []reflect.StructField) string {
+	for _, f := range fields {
+		if isGroupAnnotation(f) {
+			return f.Tag.Get("handle")
+		}
+	}
+	return ""
 }
 
 func splitTag(tag string) (method, pattern string) {
