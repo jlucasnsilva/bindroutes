@@ -5,8 +5,10 @@ such:
 
 ```go
 Controller struct {
-    NewUser http.HandlerFunc `handle:"POST /users"`
-    GetUser http.HandlerFunc `handle:"GET /users/{id}"`
+    bindroutes.Group `handle:"/users"`
+
+    NewUser http.HandlerFunc `handle:"POST /"`
+    GetUser http.HandlerFunc `handle:"GET /{id}"`
 }
 ```
 
