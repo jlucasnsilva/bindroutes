@@ -1,10 +1,7 @@
 package bindroutes
 
 import (
-	"encoding/json"
-	"fmt"
 	"net/http"
-	"net/url"
 	"path"
 	"reflect"
 	"strings"
@@ -73,9 +70,6 @@ func UsingRouters(rs map[string]Router, controllers ...any) {
 			p.registerGroup(g)
 		}
 	}
-
-	bs, _ := json.MarshalIndent(rs, "", "\t")
-	fmt.Printf("\n\n\n\nrs = %v\n\n\n\n", string(bs))
 }
 
 func (p plug) register(v reflect.Value) {
@@ -188,12 +182,7 @@ func groupHandlerFuncs(controllers []any) handlerGroups {
 			}
 
 			method, pattern, groupName := splitTag(tag)
-			route, err := url.JoinPath(bpath, pattern)
-			if err != nil {
-				panic(
-					"Unable to join path '" + bpath + "' + '" + pattern + "': " + err.Error(),
-				)
-			}
+			route := path.Join(bpath, pattern)
 			g.add(groupName, method, route, v.FieldByIndex([]int{i}))
 		}
 	}

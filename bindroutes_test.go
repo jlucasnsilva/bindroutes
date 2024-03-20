@@ -8,7 +8,7 @@ import (
 )
 
 type (
-	router map[string]bool
+	testRouter map[string]bool
 
 	testHandler struct {
 		BasePath `handle:"/users"`
@@ -64,7 +64,7 @@ func TestUsingRouter(t *testing.T) {
 		Put:    dummyHandler,
 		Delete: dummyHandler,
 	}
-	r := make(router)
+	r := make(testRouter)
 
 	UsingRouter(r, &h)
 
@@ -74,7 +74,7 @@ func TestUsingRouter(t *testing.T) {
 	assert.True(t, r["DELETE /users/{id}"])
 }
 
-func TestUsingRoutingGroups(t *testing.T) {
+func TestUsingRouters(t *testing.T) {
 	h := testGroupHandler{
 		Post:   dummyHandler,
 		Get:    dummyHandler,
@@ -82,16 +82,16 @@ func TestUsingRoutingGroups(t *testing.T) {
 		Delete: dummyHandler,
 	}
 	rs := map[string]Router{
-		"group_a": make(router),
-		"group_b": make(router),
-		"group_c": make(router),
+		"group_a": make(testRouter),
+		"group_b": make(testRouter),
+		"group_c": make(testRouter),
 	}
 
 	UsingRouters(rs, &h)
 
-	ra := rs["group_a"].(router)
-	rb := rs["group_b"].(router)
-	rc := rs["group_c"].(router)
+	ra := rs["group_a"].(testRouter)
+	rb := rs["group_b"].(testRouter)
+	rc := rs["group_c"].(testRouter)
 
 	assert.True(t, ra["POST /users"])
 	assert.True(t, rb["GET /users/{id}"])
@@ -101,7 +101,7 @@ func TestUsingRoutingGroups(t *testing.T) {
 
 func TestFailRegister(t *testing.T) {
 	h := failingHandler{Post: dummyHandler}
-	r := make(router)
+	r := make(testRouter)
 
 	assert.Panics(t, func() {
 		UsingRouter(r, h)
@@ -123,31 +123,31 @@ func TestGroupHandlerFuncs(t *testing.T) {
 	assert.Equal(t, 0, len(hg["group_d"]))
 }
 
-func (r router) Delete(pattern string, h http.HandlerFunc) {
+func (r testRouter) Delete(pattern string, h http.HandlerFunc) {
 	r["DELETE "+pattern] = true
 }
 
-func (r router) Get(pattern string, h http.HandlerFunc) {
+func (r testRouter) Get(pattern string, h http.HandlerFunc) {
 	r["GET "+pattern] = true
 }
 
-func (r router) Head(pattern string, h http.HandlerFunc) {
+func (r testRouter) Head(pattern string, h http.HandlerFunc) {
 	r["HEAD "+pattern] = true
 }
 
-func (r router) Options(pattern string, h http.HandlerFunc) {
+func (r testRouter) Options(pattern string, h http.HandlerFunc) {
 	r["OPTIONS "+pattern] = true
 }
 
-func (r router) Patch(pattern string, h http.HandlerFunc) {
+func (r testRouter) Patch(pattern string, h http.HandlerFunc) {
 	r["PATCH "+pattern] = true
 }
 
-func (r router) Post(pattern string, h http.HandlerFunc) {
+func (r testRouter) Post(pattern string, h http.HandlerFunc) {
 	r["POST "+pattern] = true
 }
 
-func (r router) Put(pattern string, h http.HandlerFunc) {
+func (r testRouter) Put(pattern string, h http.HandlerFunc) {
 	r["PUT "+pattern] = true
 }
 
