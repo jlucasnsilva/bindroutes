@@ -87,16 +87,17 @@ func (p plug) register(v reflect.Value) {
 		}
 
 		method, pattern, _ := splitTag(tag)
-		for k, handle := range p {
-			if method == k {
-				urlPath := path.Join(bpath, pattern)
-				in := []reflect.Value{
-					reflect.ValueOf(urlPath),
-					v.FieldByIndex([]int{i}),
-				}
-				handle.Call(in)
-			}
+		handle, ok := p[method]
+		if !ok {
+			continue
 		}
+
+		urlPath := path.Join(bpath, pattern)
+		in := []reflect.Value{
+			reflect.ValueOf(urlPath),
+			v.FieldByIndex([]int{i}),
+		}
+		handle.Call(in)
 	}
 }
 
