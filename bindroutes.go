@@ -39,8 +39,11 @@ type (
 )
 
 const (
-	basePathTypeName = "BasePath"
-	groupTagName     = "group"
+	RootRouterName = "root"
+
+	basePathTypeName  = "BasePath"
+	handleTagName     = "handle"
+	routerNameTagName = "using-router"
 )
 
 var basePathType = reflect.TypeOf(BasePath{})
@@ -81,12 +84,12 @@ func (p plug) register(v reflect.Value) {
 			continue
 		}
 
-		tag := f.Tag.Get("handle")
+		tag := f.Tag.Get(handleTagName)
 		if tag == "" {
 			continue
 		}
 
-		method, pattern, _ := splitTag(tag)
+		method, pattern := splitHandleTag(tag)
 		handle, ok := p[method]
 		if !ok {
 			continue
@@ -122,19 +125,14 @@ func isGroupAnnotation(f reflect.StructField) bool {
 func basePath(fields []reflect.StructField) string {
 	for _, f := range fields {
 		if isGroupAnnotation(f) {
-			return f.Tag.Get("handle")
+			return f.Tag.Get(handleTagName)
 		}
 	}
 	return ""
 }
 
-func splitTag(tag string) (method, pattern string, groups string) {
-	parts := strings.Split(tag, ",")
-	if len(parts) < 1 {
-		panic("Invalid handle definition. Method and route should be defined.")
-	}
-
-	elems := strings.Split(parts[0], " ")
+func splitHandleTag(tag string) (method, pattern string) {
+	elems := strings.Split(tag, " ")
 	if len(elems) < 2 {
 		panic("Invalid handle definition. Method and route should be defined.")
 	}
@@ -143,17 +141,7 @@ func splitTag(tag string) (method, pattern string, groups string) {
 	if !isHTTPMethod(method) {
 		panic("Invalid method '" + method + "'.")
 	}
-	if len(parts) < 2 {
-		return method, pattern, ""
-	}
-
-	gparts := strings.Split(parts[1], "=")
-	if len(gparts) < 2 || gparts[0] != groupTagName || gparts[1] == "" {
-		panic(
-			"Invalid group declaration. The correct shape is 'groups=group_a'",
-		)
-	}
-	return method, pattern, gparts[1]
+	return method, pattern
 }
 
 func isHTTPMethod(m string) bool {
@@ -177,14 +165,19 @@ func groupHandlerFuncs(controllers []any) handlerGroups {
 				continue
 			}
 
-			tag := f.Tag.Get("handle")
+			tag := f.Tag.Get(handleTagName)
 			if tag == "" {
 				continue
 			}
 
-			method, pattern, groupName := splitTag(tag)
+			routerName := f.Tag.Get(routerNameTagName)
+			if routerName == "" {
+				routerName = RootRouterName
+			}
+
+			method, pattern := splitHandleTag(tag)
 			route := path.Join(bpath, pattern)
-			g.add(groupName, method, route, v.FieldByIndex([]int{i}))
+			g.add(routerName, method, route, v.FieldByIndex([]int{i}))
 		}
 	}
 	return g

@@ -23,10 +23,10 @@ type (
 	testGroupHandler struct {
 		BasePath `handle:"/users"`
 
-		Post   http.HandlerFunc `handle:"POST /,group=group_a"`
-		Get    http.HandlerFunc `handle:"GET /{id},group=group_b"`
-		Put    http.HandlerFunc `handle:"PUT /{id},group=group_a"`
-		Delete http.HandlerFunc `handle:"DELETE /{id},group=group_c"`
+		Post   http.HandlerFunc `handle:"POST /"       using-router:"router_a"`
+		Get    http.HandlerFunc `handle:"GET /{id}"    using-router:"router_b"`
+		Put    http.HandlerFunc `handle:"PUT /{id}"    using-router:"router_a"`
+		Delete http.HandlerFunc `handle:"DELETE /{id}" using-router:"router_c"`
 	}
 
 	failingHandler struct {
@@ -38,7 +38,7 @@ func TestSplitTag(t *testing.T) {
 	assert.Panics(
 		t,
 		func() {
-			splitTag("GET")
+			splitHandleTag("GET")
 		},
 		"should panic with incomplete string",
 	)
@@ -46,15 +46,14 @@ func TestSplitTag(t *testing.T) {
 	assert.Panics(
 		t,
 		func() {
-			splitTag("NINJA /")
+			splitHandleTag("NINJA /")
 		},
 		"should panic with wrong method",
 	)
 
-	method, pattern, group := splitTag("POST /,group=ninja")
+	method, pattern := splitHandleTag("POST /")
 	assert.Equal(t, "POST", method)
 	assert.Equal(t, "/", pattern)
-	assert.Equal(t, "ninja", group)
 }
 
 func TestUsingRouter(t *testing.T) {
@@ -82,16 +81,16 @@ func TestUsingRouters(t *testing.T) {
 		Delete: dummyHandler,
 	}
 	rs := map[string]Router{
-		"group_a": make(testRouter),
-		"group_b": make(testRouter),
-		"group_c": make(testRouter),
+		"router_a": make(testRouter),
+		"router_b": make(testRouter),
+		"router_c": make(testRouter),
 	}
 
 	UsingRouters(rs, &h)
 
-	ra := rs["group_a"].(testRouter)
-	rb := rs["group_b"].(testRouter)
-	rc := rs["group_c"].(testRouter)
+	ra := rs["router_a"].(testRouter)
+	rb := rs["router_b"].(testRouter)
+	rc := rs["router_c"].(testRouter)
 
 	assert.True(t, ra["POST /users"])
 	assert.True(t, rb["GET /users/{id}"])
@@ -117,10 +116,10 @@ func TestGroupHandlerFuncs(t *testing.T) {
 	}
 
 	hg := groupHandlerFuncs([]any{&h})
-	assert.Equal(t, 2, len(hg["group_a"]))
-	assert.Equal(t, 1, len(hg["group_b"]))
-	assert.Equal(t, 1, len(hg["group_c"]))
-	assert.Equal(t, 0, len(hg["group_d"]))
+	assert.Equal(t, 2, len(hg["router_a"]))
+	assert.Equal(t, 1, len(hg["router_b"]))
+	assert.Equal(t, 1, len(hg["router_c"]))
+	assert.Equal(t, 0, len(hg["router_d"]))
 }
 
 func (r testRouter) Delete(pattern string, h http.HandlerFunc) {
