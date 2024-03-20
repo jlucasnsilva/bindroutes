@@ -7,8 +7,8 @@ such:
 Controller struct {
     bindroutes.BasePath `handle:"/users"`
 
-    NewUser http.HandlerFunc `handle:"POST /"`
-    GetUser http.HandlerFunc `handle:"GET /{id}"`
+    NewUser http.HandlerFunc `handle:"POST /"      using-router:"public"`
+    GetUser http.HandlerFunc `handle:"GET /{id}"   using-router:"private"`
 }
 ```
 
